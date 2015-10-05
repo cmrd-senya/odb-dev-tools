@@ -1,0 +1,41 @@
+#!/bin/bash
+
+function format_xmls {
+  for i in $(find -name \*.xml); do
+    if [ -s $i ]; then
+      xmllint --format $i > $i.fmt
+      mv $i.fmt $i
+    fi
+  done
+}
+
+function odb_init {
+  if [ -z "$1" ]; then
+    return 1
+  fi
+  DEVDIR=$1-dev
+  mkdir $DEVDIR
+  unzip $1 -d $DEVDIR
+  cd $DEVDIR
+  format_xmls
+  git init .
+  echo "* text=auto" >> .gitattributes
+  git add * .gitattributes
+  git commit -m "Initialized from an odb file" --author="odb-dev-tools <odb-dev-tools>"
+}
+
+function odb_build {
+  FILENAME=../$(basename $(pwd) -dev)
+  if [ -e $FILENAME.lck ]; then
+    echo "Database is currently opened"
+  else
+    rm $FILENAME
+    zip -r $FILENAME *
+  fi
+}
+
+function odb_update {
+  unzip -o ../$(basename $(pwd) -dev)
+  format_xmls
+}
+
